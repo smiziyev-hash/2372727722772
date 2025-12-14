@@ -1,4 +1,4 @@
-import { component$, useContextProvider, Slot, useSignal, useStore, $ } from "@builder.io/qwik";
+import { component$, useContextProvider, Slot, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { routeLoader$, type RequestHandler } from "@builder.io/qwik-city";
 import jsyaml from "js-yaml";
 
@@ -63,12 +63,19 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 export default component$(() => {
   const checklists = useChecklists();
   // Create a signal that always contains an array
-  const checklistsSignal = useSignal<Sections>(Array.isArray(checklists.value) ? checklists.value : []);
+  const checklistsSignal = useSignal<Sections>([]);
   
   // Update signal when checklists data loads
-  if (Array.isArray(checklists.value) && checklists.value.length > 0) {
-    checklistsSignal.value = checklists.value;
-  }
+  useTask$(({ track }) => {
+    track(() => checklists.value);
+    const value = checklists.value;
+    if (Array.isArray(value) && value.length > 0) {
+      checklistsSignal.value = value;
+    } else if (!Array.isArray(value)) {
+      // Ensure we always have an array
+      checklistsSignal.value = [];
+    }
+  });
   
   useContextProvider(ChecklistContext, checklistsSignal);
   
