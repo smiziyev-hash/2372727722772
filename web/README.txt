@@ -1,10 +1,9 @@
+InkSec - Чеклист цифровой безопасности
 
-This is the source for the https://digital-defense.io website, which displays the checklist data interactively
+Веб-приложение для повышения осведомленности сотрудников о цифровой безопасности.
 
-For build, development and deploy instructions, see the main README
+Для инструкций по сборке, разработке и деплою см. основной README.md
 
-If you wish to make content changes, the only file you need to edit is `personal-security-checklist.yml`, in the repo's root
+Если вы хотите внести изменения в содержимое чеклиста, отредактируйте файл `personal-security-checklist.yml` в корне репозитория.
 
-All code here is licensed under MIT
-
-
+Весь код лицензирован под MIT
