@@ -62,7 +62,9 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 
 export default component$(() => {
   const checklists = useChecklists();
-  useContextProvider(ChecklistContext, checklists);
+  // Create a signal that always contains an array
+  const checklistsSignal = useSignal<Sections>(Array.isArray(checklists.value) ? checklists.value : []);
+  useContextProvider(ChecklistContext, checklistsSignal);
   
   // Initialize with default locale, will be synced from localStorage on client
   const locale = useSignal<Locale>('en');
