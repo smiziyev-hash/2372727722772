@@ -10,24 +10,28 @@ import { translations, type Translations } from "~/i18n/translations";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async ({ url }) => {
+export const useChecklists = routeLoader$(async ({ url, request }) => {
   // Try to load from local file first, then fallback to remote
   try {
-    const baseUrl = url.origin;
-    const response = await fetch(`${baseUrl}/personal-security-checklist.yml`, {
+    // Use absolute URL for Edge runtime compatibility
+    const baseUrl = new URL(request.url).origin;
+    const yamlUrl = `${baseUrl}/personal-security-checklist.yml`;
+    const response = await fetch(yamlUrl, {
       headers: {
         'Cache-Control': 'no-cache',
       },
     });
     if (response.ok) {
       const text = await response.text();
-      const parsed = jsyaml.load(text);
-      if (parsed && Array.isArray(parsed)) {
-        return parsed as Sections;
+      if (text && text.trim()) {
+        const parsed = jsyaml.load(text);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          return parsed as Sections;
+        }
       }
     }
   } catch (e) {
-    console.error('Failed to load local YAML:', e);
+    // Silently fail and try remote
   }
   
   // Fallback to remote (our repository)
@@ -36,13 +40,15 @@ export const useChecklists = routeLoader$(async ({ url }) => {
     const response = await fetch(remoteUrl);
     if (response.ok) {
       const text = await response.text();
-      const parsed = jsyaml.load(text);
-      if (parsed && Array.isArray(parsed)) {
-        return parsed as Sections;
+      if (text && text.trim()) {
+        const parsed = jsyaml.load(text);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          return parsed as Sections;
+        }
       }
     }
   } catch (e) {
-    console.error('Failed to load remote YAML:', e);
+    // Return empty array as last resort
   }
   
   // Return empty array as last resort
