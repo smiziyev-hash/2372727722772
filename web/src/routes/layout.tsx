@@ -37,15 +37,26 @@ export const useChecklists = routeLoader$(async () => {
       throw new Error('Failed to parse YAML');
     }
     
-    if (!Array.isArray(parsed)) {
-      throw new Error('YAML is not an array');
+    // YAML might be an object with a root key, check for common patterns
+    let sections: Sections = [];
+    if (Array.isArray(parsed)) {
+      sections = parsed;
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      // Try to find array in object (e.g., { checklist: [...] })
+      const keys = Object.keys(parsed);
+      for (const key of keys) {
+        if (Array.isArray(parsed[key])) {
+          sections = parsed[key];
+          break;
+        }
+      }
     }
     
-    if (parsed.length === 0) {
-      throw new Error('YAML array is empty');
+    if (!Array.isArray(sections) || sections.length === 0) {
+      throw new Error('YAML does not contain a valid sections array');
     }
     
-    return parsed as Sections;
+    return sections as Sections;
   } catch (error) {
     // Log error for debugging but return empty array to prevent crash
     console.error('Error loading checklist:', error);
