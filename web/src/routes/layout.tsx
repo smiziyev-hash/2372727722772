@@ -64,6 +64,12 @@ export default component$(() => {
   const checklists = useChecklists();
   // Create a signal that always contains an array
   const checklistsSignal = useSignal<Sections>(Array.isArray(checklists.value) ? checklists.value : []);
+  
+  // Update signal when checklists data loads
+  if (Array.isArray(checklists.value) && checklists.value.length > 0) {
+    checklistsSignal.value = checklists.value;
+  }
+  
   useContextProvider(ChecklistContext, checklistsSignal);
   
   // Initialize with default locale, will be synced from localStorage on client
