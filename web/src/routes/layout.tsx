@@ -80,13 +80,20 @@ export default component$(() => {
   useTask$(({ track }) => {
     track(() => checklists.value);
     const value = checklists.value;
-    if (Array.isArray(value) && value.length > 0) {
-      checklistsSignal.value = value;
-    } else if (!Array.isArray(value)) {
-      // Ensure we always have an array
-      checklistsSignal.value = [];
+    if (value !== undefined && value !== null) {
+      if (Array.isArray(value) && value.length > 0) {
+        checklistsSignal.value = value;
+      } else if (!Array.isArray(value)) {
+        // Ensure we always have an array
+        checklistsSignal.value = [];
+      }
     }
   });
+  
+  // Initialize with current value if available
+  if (checklists.value !== undefined && checklists.value !== null && Array.isArray(checklists.value)) {
+    checklistsSignal.value = checklists.value;
+  }
   
   useContextProvider(ChecklistContext, checklistsSignal);
   
