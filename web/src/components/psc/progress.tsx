@@ -152,6 +152,11 @@ export default component$(() => {
   useOnWindow('load', $(() => {
     const sections = Array.isArray(checklists.value) ? checklists.value : [];
     
+    // Don't calculate if sections is empty
+    if (!sections || sections.length === 0) {
+      return;
+    }
+    
     calculateProgress(sections)
       .then((progress) => {
         totalProgress.value = progress;
@@ -168,6 +173,13 @@ export default component$(() => {
    */
   useOnWindow('load', $(async () => {
     const sections = Array.isArray(checklists.value) ? checklists.value : [];
+    
+    // Don't calculate if sections is empty
+    if (!sections || sections.length === 0) {
+      sectionCompletion.value = [];
+      return;
+    }
+    
     sectionCompletion.value = await Promise.all(sections.map(section => {
       return calculateProgress([section]).then(
         (progress) => Math.round(progress.completed / progress.outOf * 100)
@@ -193,6 +205,14 @@ export default component$(() => {
    * @param priorityLabels - The translated priority labels
    */
   const makeRadarData = $((sections: Sections, currentLocale: 'en' | 'ru', priorityLabels: Record<Priority, string>): Promise<RadarChartData> => {
+    // Ensure sections is an array
+    if (!Array.isArray(sections) || sections.length === 0) {
+      return Promise.resolve({
+        labels: [],
+        datasets: []
+      });
+    }
+    
     // The labels for the corners of the chart, based on sections (translated)
     const labels = sections.map((section: Section) => translateSectionTitle(section.title, currentLocale));
     // Items applied to every dataset
@@ -249,6 +269,12 @@ export default component$(() => {
     };
 
     const sections = Array.isArray(checklists.value) ? checklists.value : [];
+    
+    // Don't create chart if sections is empty
+    if (!sections || sections.length === 0) {
+      return;
+    }
+    
     makeRadarData(sections, locale, priorityLabels).then((data) => {
       if (radarChart.value) {
         // Destroy existing chart if it exists
@@ -311,8 +337,9 @@ export default component$(() => {
   // Recreate chart when locale changes
   useVisibleTask$(({ track }) => {
     track(() => localeSignal.value);
-    // Only recreate if chart already exists (after initial load)
-    if (chartInstance.value && radarChart.value) {
+    track(() => checklists.value);
+    // Only recreate if chart already exists (after initial load) and data is available
+    if (chartInstance.value && radarChart.value && Array.isArray(checklists.value) && checklists.value.length > 0) {
       createRadarChart();
     }
   });
