@@ -10,22 +10,43 @@ import { translations, type Translations } from "~/i18n/translations";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async () => {
+export const useChecklists = routeLoader$(async ({ url }) => {
   // Try to load from local file first, then fallback to remote
   try {
-    const response = await fetch('/personal-security-checklist.yml');
+    const baseUrl = url.origin;
+    const response = await fetch(`${baseUrl}/personal-security-checklist.yml`, {
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
     if (response.ok) {
       const text = await response.text();
-      return jsyaml.load(text) as Sections;
+      const parsed = jsyaml.load(text);
+      if (parsed && Array.isArray(parsed)) {
+        return parsed as Sections;
+      }
     }
   } catch (e) {
-    // Fallback to remote
+    console.error('Failed to load local YAML:', e);
   }
-  const remoteUrl = 'https://raw.githubusercontent.com/Lissy93/personal-security-checklist/HEAD/personal-security-checklist.yml';
-  return fetch(remoteUrl)
-    .then((res) => res.text())
-    .then((res) => jsyaml.load(res) as Sections)
-    .catch(() => []);
+  
+  // Fallback to remote (our repository)
+  try {
+    const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
+    const response = await fetch(remoteUrl);
+    if (response.ok) {
+      const text = await response.text();
+      const parsed = jsyaml.load(text);
+      if (parsed && Array.isArray(parsed)) {
+        return parsed as Sections;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load remote YAML:', e);
+  }
+  
+  // Return empty array as last resort
+  return [] as Sections;
 });
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
