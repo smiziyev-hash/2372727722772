@@ -14,11 +14,15 @@ export default component$(() => {
 
   const localChecklist = useChecklist();
 
+  // Ensure we always have an array
+  const sections = localChecklist.checklist.checklist || 
+    (Array.isArray(checklists.value) ? checklists.value : []);
+
   return (
     <>
       <Hero />
       <Progress />
-      <SectionLinkGrid sections={localChecklist.checklist.checklist || checklists.value} />
+      <SectionLinkGrid sections={sections} />
     </>
   );
 });

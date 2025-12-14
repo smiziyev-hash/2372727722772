@@ -133,7 +133,8 @@ export default component$(() => {
    * @param color - The color override for the chart
    */
   const makeDataAndDrawChart = $((priority: Priority, color?: string) => {
-    filterByPriority(checklists.value, priority)
+    const sections = Array.isArray(checklists.value) ? checklists.value : [];
+    filterByPriority(sections, priority)
     .then((sections: Sections) => {
       calculateProgress(sections)
         .then((progress) => {
@@ -149,8 +150,9 @@ export default component$(() => {
    * Initiate the filtering, calculation and rendering of progress charts
    */
   useOnWindow('load', $(() => {
-
-    calculateProgress(checklists.value)
+    const sections = Array.isArray(checklists.value) ? checklists.value : [];
+    
+    calculateProgress(sections)
       .then((progress) => {
         totalProgress.value = progress;
     })
@@ -165,7 +167,8 @@ export default component$(() => {
    * Calculates the percentage of completion for each section
    */
   useOnWindow('load', $(async () => {
-    sectionCompletion.value = await Promise.all(checklists.value.map(section => {
+    const sections = Array.isArray(checklists.value) ? checklists.value : [];
+    sectionCompletion.value = await Promise.all(sections.map(section => {
       return calculateProgress([section]).then(
         (progress) => Math.round(progress.completed / progress.outOf * 100)
       );
@@ -245,7 +248,8 @@ export default component$(() => {
       'advanced': locale === 'ru' ? t.common.advanced : 'Advanced',
     };
 
-    makeRadarData(checklists.value, locale, priorityLabels).then((data) => {
+    const sections = Array.isArray(checklists.value) ? checklists.value : [];
+    makeRadarData(sections, locale, priorityLabels).then((data) => {
       if (radarChart.value) {
         // Destroy existing chart if it exists
         if (chartInstance.value) {
@@ -388,7 +392,7 @@ export default component$(() => {
       {/* Remaining Tasks */}
       <div class="p-4 rounded-box bg-front shadow-md w-96 flex-grow">
         <ul>
-          { checklists.value.map((section: Section, index: number) => (
+          { (Array.isArray(checklists.value) ? checklists.value : []).map((section: Section, index: number) => (
               <li key={index}>
                 <a
                   href={`/checklist/${section.slug}`}

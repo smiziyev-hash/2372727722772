@@ -19,8 +19,9 @@ export default component$(() => {
   const loc = useLocation();
   const slug = loc.params.title;
 
-  const section: Section | undefined = (checklists.value)
-    .find((item: Section) => item.slug === slug);
+  // Ensure we always have an array
+  const sections = Array.isArray(checklists.value) ? checklists.value : [];
+  const section: Section | undefined = sections.find((item: Section) => item.slug === slug);
   
   const sectionTitle = section ? translateSectionTitle(section.title, locale) : '';
 

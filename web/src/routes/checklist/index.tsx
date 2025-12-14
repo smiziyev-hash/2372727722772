@@ -15,10 +15,14 @@ export default component$(() => {
 
   const [completed, setCompleted] = useLocalStorage('PSC_PROGRESS', {});
 
+  // Ensure we always have an array
+  const sections = localChecklist.checklist.checklist || 
+    (Array.isArray(checklists.value) ? checklists.value : []);
+
   return (
     <main class="p-8">
       <div class="join join-vertical w-full">
-        {(localChecklist.checklist.checklist || checklists.value).map((section: Section, index: number) => (
+        {sections.map((section: Section, index: number) => (
           <div key={index} class={['collapse collapse-plus bg-base-200 my-4', `border-double border-2 border-${section.color}-400`]}>
             <input type="radio" name="my-accordion-3" /> 
             <div class={['collapse-title text-xl font-medium']}>
