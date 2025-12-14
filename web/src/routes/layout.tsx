@@ -10,49 +10,47 @@ import { translations, type Translations } from "~/i18n/translations";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async ({ url, request }) => {
-  // Try to load from local file first, then fallback to remote
+export const useChecklists = routeLoader$(async () => {
+  // Load from remote repository (more reliable in Edge runtime)
+  const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
+  
   try {
-    // Use absolute URL for Edge runtime compatibility
-    const baseUrl = new URL(request.url).origin;
-    const yamlUrl = `${baseUrl}/personal-security-checklist.yml`;
-    const response = await fetch(yamlUrl, {
+    const response = await fetch(remoteUrl, {
       headers: {
-        'Cache-Control': 'no-cache',
+        'Accept': 'text/yaml, text/plain, */*',
       },
     });
-    if (response.ok) {
-      const text = await response.text();
-      if (text && text.trim()) {
-        const parsed = jsyaml.load(text);
-        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          return parsed as Sections;
-        }
-      }
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
     }
-  } catch (e) {
-    // Silently fail and try remote
-  }
-  
-  // Fallback to remote (our repository)
-  try {
-    const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
-    const response = await fetch(remoteUrl);
-    if (response.ok) {
-      const text = await response.text();
-      if (text && text.trim()) {
-        const parsed = jsyaml.load(text);
-        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          return parsed as Sections;
-        }
-      }
+    
+    const text = await response.text();
+    
+    if (!text || !text.trim()) {
+      throw new Error('YAML file is empty');
     }
-  } catch (e) {
-    // Return empty array as last resort
+    
+    const parsed = jsyaml.load(text);
+    
+    if (!parsed) {
+      throw new Error('Failed to parse YAML');
+    }
+    
+    if (!Array.isArray(parsed)) {
+      throw new Error('YAML is not an array');
+    }
+    
+    if (parsed.length === 0) {
+      throw new Error('YAML array is empty');
+    }
+    
+    return parsed as Sections;
+  } catch (error) {
+    // Log error for debugging but return empty array to prevent crash
+    console.error('Error loading checklist:', error);
+    return [] as Sections;
   }
-  
-  // Return empty array as last resort
-  return [] as Sections;
 });
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
