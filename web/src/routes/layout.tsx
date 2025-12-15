@@ -1,6 +1,8 @@
 import { component$, useContextProvider, Slot, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { routeLoader$, type RequestHandler } from "@builder.io/qwik-city";
 import jsyaml from "js-yaml";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 import Navbar from "~/components/furniture/nav";
 import Footer from "~/components/furniture/footer";
@@ -10,34 +12,40 @@ import { translations, type Translations } from "~/i18n/translations";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async () => {
-  // Try local file first (for development), then fallback to GitHub
-  const localUrl = '/personal-security-checklist.yml';
+export const useChecklists = routeLoader$(async ({ env }) => {
   const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/checklist-data.yml';
   
   try {
-    // First try local file
-    let response = await fetch(localUrl, {
-      headers: {
-        'Accept': 'text/yaml, text/plain, */*',
-      },
-    });
+    let text: string;
     
-    // If local fails, try remote
-    if (!response.ok) {
-      console.log('Local file not found, trying remote...');
-      response = await fetch(remoteUrl, {
-        headers: {
-          'Accept': 'text/yaml, text/plain, */*',
-        },
-      });
+    // Try to read from file system first (for development)
+    try {
+      const filePath = join(process.cwd(), 'personal-security-checklist.yml');
+      text = readFileSync(filePath, 'utf-8');
+      console.log('[useChecklists] Loaded from local file:', filePath);
+    } catch (fsError) {
+      // If local file doesn't exist, try fetch from public folder
+      try {
+        const publicPath = join(process.cwd(), 'web', 'public', 'personal-security-checklist.yml');
+        text = readFileSync(publicPath, 'utf-8');
+        console.log('[useChecklists] Loaded from public folder:', publicPath);
+      } catch (publicError) {
+        // If both fail, try fetch from remote
+        console.log('[useChecklists] Local files not found, fetching from remote...');
+        const response = await fetch(remoteUrl, {
+          headers: {
+            'Accept': 'text/yaml, text/plain, */*',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+        }
+        
+        text = await response.text();
+        console.log('[useChecklists] Loaded from remote URL');
+      }
     }
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
-    }
-    
-    const text = await response.text();
     
     if (!text || !text.trim()) {
       throw new Error('YAML file is empty');
@@ -67,6 +75,7 @@ export const useChecklists = routeLoader$(async () => {
       throw new Error('YAML does not contain a valid sections array');
     }
     
+    console.log(`[useChecklists] Successfully loaded ${sections.length} sections`);
     return sections as Sections;
   } catch (error) {
     console.error('Error loading checklist:', error);
