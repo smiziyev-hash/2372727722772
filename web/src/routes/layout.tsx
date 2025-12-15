@@ -10,16 +10,27 @@ import { translations, type Translations } from "~/i18n/translations";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async () => {
-  // Load from remote repository (more reliable in Edge runtime)
+export const useChecklists = routeLoader$(async ({ url }) => {
+  // Try to load from local public folder first, then fallback to remote
+  const localUrl = '/personal-security-checklist.yml';
   const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
   
   try {
-    const response = await fetch(remoteUrl, {
+    // Try local file first (works in Vercel Edge)
+    let response = await fetch(new URL(localUrl, url.origin), {
       headers: {
         'Accept': 'text/yaml, text/plain, */*',
       },
     });
+    
+    // If local fails, try remote
+    if (!response.ok) {
+      response = await fetch(remoteUrl, {
+        headers: {
+          'Accept': 'text/yaml, text/plain, */*',
+        },
+      });
+    }
     
     if (!response.ok) {
       throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
