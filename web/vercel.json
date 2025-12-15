@@ -1,4 +1,12 @@
 {
+  "buildCommand": "npm run build && npm run build.server",
+  "outputDirectory": ".vercel/output",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/_qwik-city.func/$1"
+    }
+  ],
   "headers": [
     {
       "source": "/build/(.*)",
