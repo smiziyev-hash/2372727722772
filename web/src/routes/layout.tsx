@@ -10,55 +10,22 @@ import { translations, type Translations } from "~/i18n/translations";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async ({ url }) => {
-  // Try to load from local public folder first, then fallback to remote
-  const localUrl = '/personal-security-checklist.yml';
+export const useChecklists = routeLoader$(async () => {
+  // Load from GitHub repository (reliable in Vercel Edge runtime)
+  // Using main branch to ensure we get the latest version
   const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
   
   try {
-    let response: Response | null = null;
-    let lastError: Error | null = null;
+    console.log('Fetching YAML from:', remoteUrl);
+    const response = await fetch(remoteUrl, {
+      headers: {
+        'Accept': 'text/yaml, text/plain, */*',
+        'Cache-Control': 'no-cache',
+      },
+    });
     
-    // Try local file first (works in Vercel Edge)
-    try {
-      const localFullUrl = new URL(localUrl, url.origin);
-      response = await fetch(localFullUrl.toString(), {
-        headers: {
-          'Accept': 'text/yaml, text/plain, */*',
-        },
-      });
-      
-      if (!response.ok) {
-        console.warn(`Local file fetch failed: ${response.status} ${response.statusText}`);
-        response = null;
-      }
-    } catch (localError) {
-      console.warn('Local file fetch error:', localError);
-      lastError = localError instanceof Error ? localError : new Error(String(localError));
-      response = null;
-    }
-    
-    // If local fails, try remote
-    if (!response || !response.ok) {
-      try {
-        response = await fetch(remoteUrl, {
-          headers: {
-            'Accept': 'text/yaml, text/plain, */*',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Remote fetch failed: ${response.status} ${response.statusText}`);
-        }
-      } catch (remoteError) {
-        console.error('Remote file fetch error:', remoteError);
-        lastError = remoteError instanceof Error ? remoteError : new Error(String(remoteError));
-        throw new Error(`Failed to fetch YAML from both local and remote: ${lastError.message}`);
-      }
-    }
-    
-    if (!response) {
-      throw new Error('No response from fetch');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
     }
     
     const text = await response.text();
@@ -67,6 +34,7 @@ export const useChecklists = routeLoader$(async ({ url }) => {
       throw new Error('YAML file is empty');
     }
     
+    console.log('YAML file loaded, size:', text.length, 'bytes');
     const parsed = jsyaml.load(text);
     
     if (!parsed) {
@@ -98,7 +66,8 @@ export const useChecklists = routeLoader$(async ({ url }) => {
   } catch (error) {
     // Log error for debugging but return empty array to prevent crash
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error loading checklist:', errorMessage, error);
+    console.error('Error loading checklist:', errorMessage);
+    console.error('Error details:', error);
     // Return empty array to prevent crash, but log the error
     return [] as Sections;
   }
