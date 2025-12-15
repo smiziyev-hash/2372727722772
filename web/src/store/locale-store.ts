@@ -13,7 +13,7 @@ export interface LocaleState {
 export const LocaleContext = createContextId<LocaleState>('locale');
 
 export const useLocale = () => {
-  const [localeStorage, setLocaleStorage] = useLocalStorage<Locale>('locale', 'en');
+  const [localeStorage, setLocaleStorage] = useLocalStorage('locale', 'en');
   const locale = useSignal<Locale>(localeStorage.value || 'en');
   const t = useStore<Translations>(translations[locale.value] || translations.en);
   
