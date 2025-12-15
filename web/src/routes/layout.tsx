@@ -56,8 +56,9 @@ export const useChecklists = routeLoader$(async ({ url }) => {
       // Try to find array in object (e.g., { checklist: [...] })
       const keys = Object.keys(parsed);
       for (const key of keys) {
-        if (Array.isArray(parsed[key])) {
-          sections = parsed[key];
+        const value = (parsed as Record<string, any>)[key];
+        if (Array.isArray(value)) {
+          sections = value;
           break;
         }
       }

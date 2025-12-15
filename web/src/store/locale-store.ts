@@ -1,5 +1,6 @@
-import { createContextId, type Signal, type QRL } from '@builder.io/qwik';
+import { createContextId, type Signal, type QRL, useSignal, useStore } from '@builder.io/qwik';
 import { translations, type Translations } from '~/i18n/translations';
+import { useLocalStorage } from '~/hooks/useLocalStorage';
 
 export type Locale = 'en' | 'ru';
 

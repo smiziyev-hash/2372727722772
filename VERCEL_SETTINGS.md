@@ -9,9 +9,9 @@
 1. **Root Directory**: `web`
    - Это указывает Vercel, что проект находится в папке `web`
 
-2. **Build Command**: `cd web && npm install --legacy-peer-deps && npm run build && npm run build.server`
-   - Устанавливает зависимости, собирает клиентскую часть, затем серверную для Edge
-   - Или просто: `npm run build.server` (если зависимости уже установлены)
+2. **Build Command**: `npm run build.server`
+   - Эта команда собирает и клиентскую, и серверную часть для Vercel Edge
+   - НЕ используйте `npm run build && npm run build.server` - это вызовет ошибки TypeScript
 
 3. **Output Directory**: (оставить пустым)
    - Qwik Edge адаптер автоматически создает `.vercel/output`

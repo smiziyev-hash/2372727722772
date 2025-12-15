@@ -24,7 +24,7 @@ export default component$(() => {
     try {
       const savedLocale = window.localStorage.getItem('locale');
       if (savedLocale) {
-        const parsedLocale = JSON.parse(savedLocale) as Locale;
+        const parsedLocale = JSON.parse(savedLocale) as 'en' | 'ru';
         if (parsedLocale === 'ru' || parsedLocale === 'en') {
           changeLocale(parsedLocale);
         }
