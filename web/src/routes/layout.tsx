@@ -1,8 +1,6 @@
 import { component$, useContextProvider, Slot, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { routeLoader$, type RequestHandler } from "@builder.io/qwik-city";
 import jsyaml from "js-yaml";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 import Navbar from "~/components/furniture/nav";
 import Footer from "~/components/furniture/footer";
@@ -11,11 +9,23 @@ import { LocaleContext, type Locale } from "~/store/locale-store";
 import { translations, type Translations } from "~/i18n/translations";
 import type { Sections } from "~/types/PSC";
 
-export const useChecklists = routeLoader$(async () => {
+export const useChecklists = routeLoader$(async ({ url }) => {
+  // Load from local public folder (works in dev mode)
+  const localUrl = '/personal-security-checklist.yml';
+  
   try {
-    // Read from local file (for development)
-    const filePath = join(process.cwd(), 'personal-security-checklist.yml');
-    const text = readFileSync(filePath, 'utf-8');
+    // Fetch from local public folder
+    const response = await fetch(new URL(localUrl, url.origin), {
+      headers: {
+        'Accept': 'text/yaml, text/plain, */*',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+    }
+    
+    const text = await response.text();
     
     if (!text || !text.trim()) {
       throw new Error('YAML file is empty');
