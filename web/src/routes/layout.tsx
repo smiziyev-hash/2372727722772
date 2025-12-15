@@ -16,24 +16,49 @@ export const useChecklists = routeLoader$(async ({ url }) => {
   const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
   
   try {
-    // Try local file first (works in Vercel Edge)
-    let response = await fetch(new URL(localUrl, url.origin), {
-      headers: {
-        'Accept': 'text/yaml, text/plain, */*',
-      },
-    });
+    let response: Response | null = null;
+    let lastError: Error | null = null;
     
-    // If local fails, try remote
-    if (!response.ok) {
-      response = await fetch(remoteUrl, {
+    // Try local file first (works in Vercel Edge)
+    try {
+      const localFullUrl = new URL(localUrl, url.origin);
+      response = await fetch(localFullUrl.toString(), {
         headers: {
           'Accept': 'text/yaml, text/plain, */*',
         },
       });
+      
+      if (!response.ok) {
+        console.warn(`Local file fetch failed: ${response.status} ${response.statusText}`);
+        response = null;
+      }
+    } catch (localError) {
+      console.warn('Local file fetch error:', localError);
+      lastError = localError instanceof Error ? localError : new Error(String(localError));
+      response = null;
     }
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+    // If local fails, try remote
+    if (!response || !response.ok) {
+      try {
+        response = await fetch(remoteUrl, {
+          headers: {
+            'Accept': 'text/yaml, text/plain, */*',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Remote fetch failed: ${response.status} ${response.statusText}`);
+        }
+      } catch (remoteError) {
+        console.error('Remote file fetch error:', remoteError);
+        lastError = remoteError instanceof Error ? remoteError : new Error(String(remoteError));
+        throw new Error(`Failed to fetch YAML from both local and remote: ${lastError.message}`);
+      }
+    }
+    
+    if (!response) {
+      throw new Error('No response from fetch');
     }
     
     const text = await response.text();
@@ -68,10 +93,13 @@ export const useChecklists = routeLoader$(async ({ url }) => {
       throw new Error('YAML does not contain a valid sections array');
     }
     
+    console.log(`Successfully loaded ${sections.length} sections from YAML`);
     return sections as Sections;
   } catch (error) {
     // Log error for debugging but return empty array to prevent crash
-    console.error('Error loading checklist:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error loading checklist:', errorMessage, error);
+    // Return empty array to prevent crash, but log the error
     return [] as Sections;
   }
 });
