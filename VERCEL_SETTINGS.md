@@ -10,8 +10,8 @@
    - Это указывает Vercel, что проект находится в папке `web`
 
 2. **Build Command**: `npm run build.server`
-   - Эта команда собирает и клиентскую, и серверную часть для Vercel Edge
-   - НЕ используйте `npm run build && npm run build.server` - это вызовет ошибки TypeScript
+   - Эта команда собирает клиентскую часть (`npm run build.client`), затем серверную для Vercel Edge
+   - Команда автоматически собирает и клиент, и сервер
 
 3. **Output Directory**: (оставить пустым)
    - Qwik Edge адаптер автоматически создает `.vercel/output`
