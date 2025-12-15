@@ -16,7 +16,7 @@ export const useChecklists = routeLoader$(async () => {
   const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/personal-security-checklist.yml';
   
   try {
-    console.log('Fetching YAML from:', remoteUrl);
+    console.log('[useChecklists] Fetching YAML from:', remoteUrl);
     const response = await fetch(remoteUrl, {
       headers: {
         'Accept': 'text/yaml, text/plain, */*',
@@ -24,8 +24,12 @@ export const useChecklists = routeLoader$(async () => {
       },
     });
     
+    console.log('[useChecklists] Response status:', response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+      const errorText = await response.text().catch(() => 'Unable to read error response');
+      console.error('[useChecklists] Fetch failed:', response.status, response.statusText, errorText);
+      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}. Response: ${errorText.substring(0, 200)}`);
     }
     
     const text = await response.text();
@@ -34,7 +38,7 @@ export const useChecklists = routeLoader$(async () => {
       throw new Error('YAML file is empty');
     }
     
-    console.log('YAML file loaded, size:', text.length, 'bytes');
+    console.log('[useChecklists] YAML file loaded, size:', text.length, 'bytes');
     const parsed = jsyaml.load(text);
     
     if (!parsed) {
@@ -61,13 +65,13 @@ export const useChecklists = routeLoader$(async () => {
       throw new Error('YAML does not contain a valid sections array');
     }
     
-    console.log(`Successfully loaded ${sections.length} sections from YAML`);
+    console.log(`[useChecklists] Successfully loaded ${sections.length} sections from YAML`);
     return sections as Sections;
   } catch (error) {
     // Log error for debugging but return empty array to prevent crash
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error loading checklist:', errorMessage);
-    console.error('Error details:', error);
+    console.error('[useChecklists] Error loading checklist:', errorMessage);
+    console.error('[useChecklists] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     // Return empty array to prevent crash, but log the error
     return [] as Sections;
   }
