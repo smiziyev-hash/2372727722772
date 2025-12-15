@@ -45,3 +45,4 @@ http://localhost:5173
 - Настройки проекта в `web/package.json`
 - Статические файлы в `web/public/`
 
+

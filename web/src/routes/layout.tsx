@@ -7,32 +7,24 @@ import Footer from "~/components/furniture/footer";
 import { ChecklistContext } from "~/store/checklist-context";
 import { LocaleContext, type Locale } from "~/store/locale-store";
 import { translations, type Translations } from "~/i18n/translations";
-import { useLocalStorage } from "~/hooks/useLocalStorage";
 import type { Sections } from "~/types/PSC";
 
 export const useChecklists = routeLoader$(async () => {
-  // Load from GitHub repository using new filename
   const remoteUrl = 'https://raw.githubusercontent.com/inktech-sc/Digital_security_web/main/checklist-data.yml';
   
   try {
-    const response = await fetch(remoteUrl, {
-      headers: {
-        'Accept': 'text/yaml, text/plain, */*',
-      },
-    });
+    const response = await fetch(remoteUrl);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch: ${response.status}`);
     }
     
     const text = await response.text();
-    
     if (!text || !text.trim()) {
       throw new Error('YAML file is empty');
     }
     
     const parsed = jsyaml.load(text);
-    
     if (!parsed) {
       throw new Error('Failed to parse YAML');
     }
@@ -52,10 +44,10 @@ export const useChecklists = routeLoader$(async () => {
     }
     
     if (!Array.isArray(sections) || sections.length === 0) {
-      throw new Error('YAML does not contain a valid sections array');
+      throw new Error('No valid sections found');
     }
     
-    return sections as Sections;
+    return sections;
   } catch (error) {
     console.error('Error loading checklist:', error);
     return [] as Sections;
@@ -71,38 +63,26 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 
 export default component$(() => {
   const checklists = useChecklists();
-  // Create a signal that always contains an array
   const checklistsSignal = useSignal<Sections>([]);
   
-  // Update signal when checklists data loads
   useTask$(({ track }) => {
     track(() => checklists.value);
     const value = checklists.value;
-    if (value !== undefined && value !== null) {
-      if (Array.isArray(value) && value.length > 0) {
-        checklistsSignal.value = value;
-      } else if (!Array.isArray(value)) {
-        // Ensure we always have an array
-        checklistsSignal.value = [];
-      }
+    if (Array.isArray(value)) {
+      checklistsSignal.value = value;
+    } else {
+      checklistsSignal.value = [];
     }
   });
   
-  // Initialize with current value if available
-  if (checklists.value !== undefined && checklists.value !== null && Array.isArray(checklists.value)) {
-    checklistsSignal.value = checklists.value;
-  }
-  
   useContextProvider(ChecklistContext, checklistsSignal);
   
-  // Initialize with default locale, will be synced from localStorage on client
   const locale = useSignal<Locale>('en');
   const t = useStore<Translations>(translations.en);
   
   const changeLocale = $((newLocale: Locale) => {
     locale.value = newLocale;
     const newTranslations = translations[newLocale] || translations.en;
-    // Update all translation keys
     Object.keys(newTranslations).forEach((key) => {
       const translationKey = key as keyof Translations;
       Object.assign(t[translationKey], newTranslations[translationKey]);
