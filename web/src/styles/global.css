@@ -7,3 +7,31 @@ h1, h2, h3, h4, h5, h6 {
 p, a, li, span {
   font-family: 'Poppins', sans-serif;
 }
+
+/* Hide Web Vitals and performance metric overlays */
+[data-web-vitals],
+[data-cls],
+[data-lcp],
+[data-fid],
+[data-fcp],
+[data-ttfb],
+.web-vitals-overlay,
+.web-vitals-badge,
+.web-vitals-indicator,
+.cls-indicator,
+.performance-metric,
+[class*="web-vitals"],
+[class*="cls"],
+[class*="lcp"],
+[class*="fid"],
+[class*="fcp"],
+[class*="ttfb"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Hide any elements that might be added by browser extensions */
+body > [style*="position: fixed"][style*="z-index"]:not([class*="drawer"]):not([id*="modal"]):not([id*="dialog"]) {
+  display: none !important;
+}
