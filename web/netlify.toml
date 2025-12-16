@@ -1,0 +1,10 @@
+[build]
+  base = "web"
+  command = "npm run build && npm run build.static"
+  publish = "web/dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
