@@ -1,5 +1,5 @@
 import { component$, useContext } from '@builder.io/qwik';
-import { useLocation } from '@builder.io/qwik-city';
+import { useLocation, type StaticGenerateHandler } from '@builder.io/qwik-city';
 import { marked } from 'marked';
 
 import Icon from '~/components/core/icon';
@@ -9,6 +9,28 @@ import { translateSectionTitle } from '~/i18n/section-translations';
 import { translateChecklistContent } from '~/i18n/checklist-content-translations';
 import type { Section } from "~/types/PSC";
 import Table from '~/components/psc/checklist-table';
+
+// Generate static paths for all checklist sections
+export const onStaticGenerate: StaticGenerateHandler = async () => {
+  const slugs = [
+    'authentication',
+    'web-browsing',
+    'email',
+    'messaging',
+    'social-media',
+    'networks',
+    'mobile-devices',
+    'personal-computers',
+    'smart-home',
+    'personal-finance',
+    'human-aspect',
+    'physical-security'
+  ];
+  
+  return {
+    params: slugs.map(slug => ({ title: slug }))
+  };
+};
 
 export default component$(() => {
   const { t, locale: localeSignal } = useContext(LocaleContext);
@@ -60,4 +82,3 @@ export default component$(() => {
     </div>
   );
 });
-
