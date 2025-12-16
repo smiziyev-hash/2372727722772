@@ -12,7 +12,7 @@ export default extendConfig(baseConfig, () => {
     },
     plugins: [
       staticAdapter({
-        origin: process.env.SITE_URL || "https://yoursite.com",
+        origin: process.env.SITE_URL || "https://yoursite.netlify.app",
       }),
     ],
   };

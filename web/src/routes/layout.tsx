@@ -1,6 +1,8 @@
 import { component$, useContextProvider, Slot, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { routeLoader$, type RequestHandler } from "@builder.io/qwik-city";
 import jsyaml from "js-yaml";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 import Navbar from "~/components/furniture/nav";
 import Footer from "~/components/furniture/footer";
@@ -10,22 +12,35 @@ import { translations, type Translations } from "~/i18n/translations";
 import type { Sections } from "~/types/PSC";
 
 export const useChecklists = routeLoader$(async ({ url }) => {
-  // Load from public folder (works in both dev and static build)
-  const localUrl = '/personal-security-checklist.yml';
-  
   try {
-    // Fetch from public folder
-    const response = await fetch(new URL(localUrl, url.origin), {
-      headers: {
-        'Accept': 'text/yaml, text/plain, */*',
-      },
-    });
+    let text: string;
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+    // Try to read from file system first (for static build)
+    try {
+      // During build, try to read from public folder
+      const publicPath = join(process.cwd(), 'public', 'personal-security-checklist.yml');
+      text = readFileSync(publicPath, 'utf-8');
+    } catch (fsError) {
+      // If not found in public, try root
+      try {
+        const rootPath = join(process.cwd(), 'personal-security-checklist.yml');
+        text = readFileSync(rootPath, 'utf-8');
+      } catch (rootError) {
+        // Fallback to fetch (for dev mode)
+        const localUrl = '/personal-security-checklist.yml';
+        const response = await fetch(new URL(localUrl, url.origin), {
+          headers: {
+            'Accept': 'text/yaml, text/plain, */*',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch YAML: ${response.status} ${response.statusText}`);
+        }
+        
+        text = await response.text();
+      }
     }
-    
-    const text = await response.text();
     
     if (!text || !text.trim()) {
       throw new Error('YAML file is empty');
