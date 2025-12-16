@@ -1985,7 +1985,7 @@ CCTV является одним из основных способов, кот�
 // Normalize string to handle different quote types, Unicode variants, and markdown links
 const normalizeString = (str: string): string => {
   return str
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove markdown links: [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove markdown links: [text](url) -> text
     .replace(/[''""]/g, "'") // Replace all quote variants (straight, curly, smart quotes) with standard apostrophe
     .replace(/\u2018|\u2019|\u201C|\u201D/g, "'") // Replace Unicode quote characters
     .trim();

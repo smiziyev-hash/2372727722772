@@ -1,5 +1,5 @@
 
-import { $, component$, useContext, useOnWindow, useSignal } from "@builder.io/qwik";
+import { $, component$, useContext, useOnWindow } from "@builder.io/qwik";
 import Icon from "~/components/core/icon";
 import type { Section } from '~/types/PSC';
 import { useTheme } from '~/store/theme-store';
@@ -7,14 +7,13 @@ import articles from '~/data/articles';
 import { ChecklistContext } from '~/store/checklist-context';
 import { LocaleContext } from '~/store/locale-store';
 import { translateSectionTitle } from '~/i18n/section-translations';
-import { translations } from '~/i18n/translations';
 
 
 export default component$(() => {
 
   const data = useContext(ChecklistContext);
   const localeContext = useContext(LocaleContext);
-  const { locale: localeSignal, t, changeLocale } = localeContext;
+  const { locale: localeSignal, changeLocale } = localeContext;
   const locale = localeSignal.value;
 
   const { theme, setTheme } = useTheme();
