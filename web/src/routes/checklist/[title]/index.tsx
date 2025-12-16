@@ -1,6 +1,9 @@
 import { component$, useContext } from '@builder.io/qwik';
 import { useLocation, type StaticGenerateHandler } from '@builder.io/qwik-city';
 import { marked } from 'marked';
+import jsyaml from 'js-yaml';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 import Icon from '~/components/core/icon';
 import { ChecklistContext } from '~/store/checklist-context';
@@ -12,24 +15,80 @@ import Table from '~/components/psc/checklist-table';
 
 // Generate static paths for all checklist sections
 export const onStaticGenerate: StaticGenerateHandler = async () => {
-  const slugs = [
-    'authentication',
-    'web-browsing',
-    'email',
-    'messaging',
-    'social-media',
-    'networks',
-    'mobile-devices',
-    'personal-computers',
-    'smart-home',
-    'personal-finance',
-    'human-aspect',
-    'physical-security'
-  ];
-  
-  return {
-    params: slugs.map(slug => ({ title: slug }))
-  };
+  try {
+    // Load YAML file to get all slugs
+    let text: string;
+    try {
+      const publicPath = join(process.cwd(), 'public', 'personal-security-checklist.yml');
+      text = readFileSync(publicPath, 'utf-8');
+    } catch {
+      try {
+        const rootPath = join(process.cwd(), 'personal-security-checklist.yml');
+        text = readFileSync(rootPath, 'utf-8');
+      } catch {
+        // Fallback to hardcoded list if file not found
+        const slugs = [
+          'authentication',
+          'web-browsing',
+          'email',
+          'messaging',
+          'social-media',
+          'networks',
+          'mobile-devices',
+          'personal-computers',
+          'smart-home',
+          'personal-finance',
+          'human-aspect',
+          'physical-security'
+        ];
+        return {
+          params: slugs.map(slug => ({ title: slug }))
+        };
+      }
+    }
+    
+    const parsed = jsyaml.load(text);
+    let sections: Section[] = [];
+    
+    if (Array.isArray(parsed)) {
+      sections = parsed;
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      const keys = Object.keys(parsed);
+      for (const key of keys) {
+        const value = (parsed as Record<string, any>)[key];
+        if (Array.isArray(value)) {
+          sections = value;
+          break;
+        }
+      }
+    }
+    
+    const slugs = sections.map((section: Section) => section.slug).filter(Boolean);
+    
+    return {
+      params: slugs.map(slug => ({ title: slug }))
+    };
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    // Fallback to hardcoded list
+    const slugs = [
+      'authentication',
+      'web-browsing',
+      'email',
+      'messaging',
+      'social-media',
+      'networks',
+      'mobile-devices',
+      'personal-computers',
+      'smart-home',
+      'personal-finance',
+      'human-aspect',
+      'physical-security'
+    ];
+    return {
+      params: slugs.map(slug => ({ title: slug }))
+    };
+  }
 };
 
 export default component$(() => {
