@@ -10,11 +10,11 @@ import { translations, type Translations } from "~/i18n/translations";
 import type { Sections } from "~/types/PSC";
 
 export const useChecklists = routeLoader$(async ({ url }) => {
-  // Load from local public folder (works in dev mode)
+  // Load from public folder (works in both dev and static build)
   const localUrl = '/personal-security-checklist.yml';
   
   try {
-    // Fetch from local public folder
+    // Fetch from public folder
     const response = await fetch(new URL(localUrl, url.origin), {
       headers: {
         'Accept': 'text/yaml, text/plain, */*',
